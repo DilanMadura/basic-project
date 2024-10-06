@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 8082
 application:
   name: basic-project
   version: 1.0.0
