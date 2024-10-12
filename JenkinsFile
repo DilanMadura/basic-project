@@ -1,73 +1,64 @@
 pipeline {
     agent any
-
     tools {
-        // Define Maven and JDK versions (make sure Jenkins has these installed)
-        jdk 'JDK21'
-        maven 'Maven 3.8.1'
+        maven 'Maven 3.x' // Define Maven tool, should match the one configured in Jenkins
+        jdk 'JDK 11'      // Define JDK version, adjust as per your setup
     }
-
     environment {
-        // Environment variables for Maven and Spring
-        SPRING_PROFILES_ACTIVE = 'test'  // Define the Spring profile for testing
+        GIT_REPO_URL = 'https://github.com/DilanMadura/basic-project'  // Your Git repository URL
     }
-
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from Git repository
-                git branch: 'main', url: 'https://github.com/DilanMadura/basic-project.git'
+                // Checkout code from the Git repository
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-credentials', url: 'https://github.com/DilanMadura/basic-project.git']])
             }
         }
-
         stage('Build') {
             steps {
-                // Compile and build the project using Maven
-                sh 'mvn clean install -DskipTests=true'
+                // Run Maven build
+                sh 'mvn clean install'
             }
         }
-
         stage('Unit Test') {
             steps {
-                // Run unit tests using Maven
+                // Run Unit Tests
                 sh 'mvn test'
             }
-
-            post {
-                always {
-                    // Always publish test results, even if the tests fail
-                    junit '**/target/surefire-reports/*.xml'
+        }
+        /* stage('SonarQube Analysis') {  // Optional: For code quality
+            steps {
+                script {
+                    // If you're using SonarQube for code analysis
+                    withSonarQubeEnv('SonarQube') {
+                        sh 'mvn sonar:sonar'
+                    }
                 }
             }
-        }
-
+        } */
         stage('Package') {
             steps {
-                // Package the application as a JAR or WAR file
+                // Package the Spring Boot app (creates a jar)
                 sh 'mvn package'
             }
-
-            post {
-                success {
-                    // Archive the built JAR/WAR file
-                    archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
-                }
+        }
+        stage('Deploy') {  // Optional: For deployment
+            steps {
+                // Deploy the app (optional, depending on your environment)
+                echo 'Deploying the application...'
             }
         }
     }
-
     post {
         always {
-            // Clean the workspace after the build
+            // Clean workspace after build
             cleanWs()
         }
         success {
-            // Notify if the build succeeds (for example, via Slack or email)
-            echo 'Build and unit tests succeeded!'
+            echo 'Build and Test Success!'
         }
         failure {
-            // Notify if the build fails
-            echo 'Build or tests failed.'
+            echo 'Build or Tests failed!'
         }
     }
 }
