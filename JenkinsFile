@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    tools {
+        // Define Maven and JDK versions (make sure Jenkins has these installed)
+        jdk 'JDK21'
+        maven 'Maven 3.8.1'
+    }
+
+    environment {
+        // Environment variables for Maven and Spring
+        SPRING_PROFILES_ACTIVE = 'test'  // Define the Spring profile for testing
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout code from Git repository
+                git branch: 'main', url: 'https://github.com/DilanMadura/basic-project.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // Compile and build the project using Maven
+                sh 'mvn clean install -DskipTests=true'
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                // Run unit tests using Maven
+                sh 'mvn test'
+            }
+
+            post {
+                always {
+                    // Always publish test results, even if the tests fail
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                // Package the application as a JAR or WAR file
+                sh 'mvn package'
+            }
+
+            post {
+                success {
+                    // Archive the built JAR/WAR file
+                    archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean the workspace after the build
+            cleanWs()
+        }
+        success {
+            // Notify if the build succeeds (for example, via Slack or email)
+            echo 'Build and unit tests succeeded!'
+        }
+        failure {
+            // Notify if the build fails
+            echo 'Build or tests failed.'
+        }
+    }
+}
