@@ -2,7 +2,7 @@ pipeline {
     agent any
     tools {
         maven 'Maven 3.x' // Define Maven tool, should match the one configured in Jenkins
-        jdk 'JDK 11'      // Define JDK version, adjust as per your setup
+        jdk 'JDK 21'      // Define JDK version, adjust as per your setup
     }
     environment {
         GIT_REPO_URL = 'https://github.com/DilanMadura/basic-project'  // Your Git repository URL
