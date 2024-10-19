@@ -1,5 +1,11 @@
 pipeline {
-    agent any
+    agent {
+            docker {
+                image 'dmjtech/basic-project' // Define the Docker image you want to use
+                label 'basic-project'         // This is optional; specifies that the node has Docker installed
+                args '-v /path/on/host:/path/in/container' // Additional Docker run options (optional)
+            }
+        }
     tools {
         maven 'Maven 3.x' // Define Maven tool, should match the one configured in Jenkins
         jdk 'JDK 21'      // Define JDK version, adjust as per your setup
@@ -41,6 +47,13 @@ pipeline {
                 // Package the Spring Boot app (creates a jar)
                 sh 'mvn package'
             }
+        }
+        stage('Build Docker Image') {
+             steps {
+                  script {
+                       docker.build('basic-project')
+                  }
+             }
         }
         stage('Deploy') {  // Optional: For deployment
             steps {
